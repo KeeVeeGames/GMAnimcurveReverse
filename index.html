@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://unpkg.com/json5@2/dist/index.min.js"></script>
+        <style>
+            .main {
+                display: flex;
+                justify-content:space-between;
+                flex-direction: column;
+                width: 50%;
+                height: 50vh;
+            }
+
+            .field {
+                height: 40%;
+            }
+
+            .button {
+                width: fit-content;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="main">
+            <textarea class="field" id="field-input" /></textarea>
+            <input type="submit" class="button" id="button-reverse" value="Animcurve Reverse"></input>
+            <input type="submit" class="button" id="button-reverse2" value="Track Reverse"></input>
+            <textarea class="field" id="field-output" /></textarea>
+
+            <script>
+                function animcurve_reverse() {
+                    var animcurve_channel = JSON5.parse(document.getElementById("field-input").value);
+                    
+                    animcurve_channel.points.reverse();
+
+                    animcurve_channel.points.forEach(point => {
+                        point.x = 1 - point.x;
+
+                        var t = point.th0;
+                        point.th0 = -point.th1;
+                        point.th1 = -t;
+
+                        var t = point.tv0;
+                        point.tv0 = point.tv1;
+                        point.tv1 = t;
+                    });
+
+                    document.getElementById("field-output").value = JSON.stringify(animcurve_channel);
+                }
+
+                function track_reverse() {
+                    var track = JSON5.parse(document.getElementById("field-input").value);
+                    
+                    track.keyframes.Keyframes.reverse();
+
+                    track.keyframes.Keyframes.forEach(keyframe => {
+                        keyframe.Key = 45 - keyframe.Key;
+                    });
+
+                    document.getElementById("field-output").value = JSON.stringify(track);
+                }
+
+                document.getElementById("button-reverse").onclick = animcurve_reverse;
+                document.getElementById("button-reverse2").onclick = track_reverse;
+            </script>
+        </div>
+    </body>
+</html>
