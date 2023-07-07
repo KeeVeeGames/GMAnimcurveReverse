@@ -6,14 +6,30 @@
         <style>
             .main {
                 display: flex;
-                justify-content:space-between;
                 flex-direction: column;
-                width: 50%;
-                height: 50vh;
+                gap: 10px;
+                width: 75%;
+                height: 75vh;
+            }
+
+            .view {
+                display: flex;
+                flex-direction: row;
+                column-gap: 10px;
+                height: 100%;
+                margin: 0, 2, 0, 2;
+            }
+
+            canvas {
+                border: 1px solid grey;
+                width: 300px;
+                height: 150px;
             }
 
             .field {
-                height: 40%;
+                width: 100%;
+                height: 100%;
+                padding: 0;
             }
 
             .button {
@@ -23,14 +39,22 @@
     </head>
     <body>
         <div class="main">
-            <textarea class="field" id="field-input" /></textarea>
+            <div class="view">
+                <textarea class="field" id="field-input"></textarea>
+                <canvas id="canvas-input"></canvas>
+            </div>
             <input type="submit" class="button" id="button-reverse" value="Animcurve Reverse"></input>
             <input type="submit" class="button" id="button-reverse2" value="Track Reverse"></input>
-            <textarea class="field" id="field-output" /></textarea>
+            <div class="view">
+                <textarea class="field" id="field-output"></textarea>
+                <canvas id="canvas-output"></canvas>
+            </div>
 
             <script>
                 function animcurve_reverse() {
                     var animcurve_channel = JSON5.parse(document.getElementById("field-input").value);
+                
+                    render(document.getElementById("canvas-input").getContext("2d"), animcurve_channel);
                     
                     animcurve_channel.points.reverse();
 
@@ -45,6 +69,8 @@
                         point.tv0 = point.tv1;
                         point.tv1 = t;
                     });
+
+                    render(document.getElementById("canvas-output").getContext("2d"), animcurve_channel);
 
                     document.getElementById("field-output").value = JSON.stringify(animcurve_channel);
                 }
@@ -63,6 +89,75 @@
 
                 document.getElementById("button-reverse").onclick = animcurve_reverse;
                 document.getElementById("button-reverse2").onclick = track_reverse;
+
+                ///
+
+                // De Casteljau's algorithm which calculates points along a cubic Bezier curve
+
+                function getBezierPointT(point1, point2, T) {
+                    var x = bezier(point1.x, point1.x + point1.th1, point2.x + point2.th0, point2.x, T);
+                    var y = bezier(point1.y, point1.y + point1.tv1, point2.y + point2.tv0, point2.y, T);
+                    return({ x:x, y:y });
+                }
+
+                function bezier(a, b, c, d, T) {
+                    var t2 = T * T;
+                    var t3 = t2 * T;
+                    return a + (-a * 3 + T * (3 * a - a * T)) * T
+                    + (3 * b + T * (-6 * b + b * 3 * T)) * T
+                    + (c * 3 - c * 3 * T) * t2
+                    + d * t3;
+                }
+
+                function render(context, curve) {
+                    const margin = 20;
+                    const width = context.canvas.clientWidth;
+                    const height = context.canvas.clientHeight;
+                
+                    context.beginPath();
+
+                    var points = curve.points;
+                    var min_y = Infinity;
+                    var max_y = -Infinity;
+
+                    for (var i = 0; i < points.length - 1; i++) {
+                        var point1 = points[i];
+                        var point2 = points[i + 1];
+                        var extremum;
+
+                        for (var j = 0; j < 10; j++) {
+                            extremum = getBezierPointT(point1, point2, j / 10);
+                            min_y = Math.min(min_y, extremum.y);
+                            max_y = Math.max(max_y, extremum.y);
+                        }
+                    }
+
+                    var scale_x = width;
+                    var scale_y = height / (Math.max(max_y, 1) - Math.min(min_y, -1));
+                    var offset = height / 2;
+
+                    for (var i = 0; i < points.length - 1; i++) {
+                        var point1 = points[i];
+                        var point2 = points[i + 1];
+                        var center = min_y + (max_y - min_y) / 2;
+
+                        var x1 = point1.x * scale_x;
+                        var y1 = offset + (center - point1.y) * scale_y;
+                        var h1 = point1.th1 * scale_x;
+                        var v1 = -point1.tv1 * scale_y;
+                        var x2 = point2.x * scale_x;
+                        var y2 = offset + (center - point2.y) * scale_y;
+                        var h2 = point2.th0 * scale_x;
+                        var v2 = -point2.tv0 * scale_y;
+
+                        context.moveTo(x1, y1);
+                        console.log(point1.y * scale_y);
+                        context.bezierCurveTo(x1 + h1, y1 + v1, x2 + h2, y2 + v2, x2, y2);
+                        //ctx.bezierCurveTo(x1, y1, x2, y2, x2, y2);
+                    }
+
+                    context.stroke();
+                }
             </script>
         </div>
     </body>
