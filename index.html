@@ -3,39 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <script src="https://unpkg.com/json5@2/dist/index.min.js"></script>
-        <style>
-            .main {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                width: 75%;
-                height: 75vh;
-            }
-
-            .view {
-                display: flex;
-                flex-direction: row;
-                column-gap: 10px;
-                height: 100%;
-                margin: 0, 2, 0, 2;
-            }
-
-            canvas {
-                border: 1px solid grey;
-                width: 300px;
-                height: 150px;
-            }
-
-            .field {
-                width: 100%;
-                height: 100%;
-                padding: 0;
-            }
-
-            .button {
-                width: fit-content;
-            }
-        </style>
+        <script src="./scripts/animcurve/animcurve.js"></script>
+        <script src="./scripts/main.js"></script>
+        <link rel="stylesheet" href="./style/shared/style.css">
+        <link rel="stylesheet" href="./style/style.css">
     </head>
     <body>
         <div class="main">
@@ -75,39 +46,7 @@
                     document.getElementById("field-output").value = JSON.stringify(animcurve_channel);
                 }
 
-                function track_reverse() {
-                    var track = JSON5.parse(document.getElementById("field-input").value);
-                    
-                    track.keyframes.Keyframes.reverse();
-
-                    track.keyframes.Keyframes.forEach(keyframe => {
-                        keyframe.Key = 45 - keyframe.Key;
-                    });
-
-                    document.getElementById("field-output").value = JSON.stringify(track);
-                }
-
                 document.getElementById("button-reverse").onclick = animcurve_reverse;
-                document.getElementById("button-reverse2").onclick = track_reverse;
-
-                ///
-
-                // De Casteljau's algorithm which calculates points along a cubic Bezier curve
-
-                function getBezierPointT(point1, point2, T) {
-                    var x = bezier(point1.x, point1.x + point1.th1, point2.x + point2.th0, point2.x, T);
-                    var y = bezier(point1.y, point1.y + point1.tv1, point2.y + point2.tv0, point2.y, T);
-                    return({ x:x, y:y });
-                }
-
-                function bezier(a, b, c, d, T) {
-                    var t2 = T * T;
-                    var t3 = t2 * T;
-                    return a + (-a * 3 + T * (3 * a - a * T)) * T
-                    + (3 * b + T * (-6 * b + b * 3 * T)) * T
-                    + (c * 3 - c * 3 * T) * t2
-                    + d * t3;
-                }
 
                 function render(context, curve) {
                     const margin = 20;
